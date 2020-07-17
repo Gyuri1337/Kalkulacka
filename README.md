@@ -1,0 +1,2 @@
+# Kalkulacka
+Qml &amp; C++
