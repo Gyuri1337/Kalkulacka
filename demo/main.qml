@@ -3,6 +3,7 @@ import QtQuick.Window 2.0
 import QtScxml 5.8
 import QtQuick.Controls 1.4
 import com.Calculator 1.0
+import QtQuick.Controls.Styles 1.4
 
 
 Window {
@@ -11,21 +12,57 @@ Window {
     property real myWidth: 320
     property real realWidth: isBasic ? width : width * 4 /5
     property bool isBasic: true
+    property int numOfButtonsInAColumn: 6
+    property int numOfBlockForResult: 3
+    property int verticalBlocksCount: numOfButtonsInAColumn + numOfBlockForResult;
+    property int horizontalBlocksCount:5
+    property int numOfButtonsInARow: horizontalBlocksCount - 1
+
     width: myWidth
     height: 480
-    Calculator{
+    Calculator {                                            //////C++ class
         id: calculator
 
         }
+    Repeater{
+        id: resultAreaButtons
+        model: ["Ch", "MR", "MS"]
+
+        Button{
+            x: 0
+            y: index * height
+            width: parent.width - resultArea.width
+            height: parent.height / verticalBlocksCount
+            text: modelData
+            onClicked: {
+                if(modelData === "Ch"){
+                    if(isBasic){
+                        isBasic = false
+                        myWidth = parent.width / numOfButtonsInARow *(numOfButtonsInARow +1)
+                        myWidth = parent.width / 4 *5
+                    }
+                    else{
+                        isBasic = true
+                        myWidth = parent.width /(numOfButtonsInARow+1) *(numOfButtonsInARow)
+                    }
+                }
+                else{
+                    calculator.buttonClick(modelData)
+                }
+            }
+        }
+
+    }
     Rectangle {
         id: resultArea
-        anchors.left: calculatorType.right
-        width: isBasic ? parent.width / 4 * 3 : realWidth
+        anchors.right: parent.right
+        width: isBasic ? parent.width / numOfButtonsInARow * (numOfButtonsInARow - 1): realWidth
         anchors.top: parent.top
-        height: parent.height * 3 / 8 - 10
+        height: parent.height * numOfBlockForResult / verticalBlocksCount
         border.color: "white"
         border.width: 1
-        color: "#46a2da"
+        color: "#395EC6"
+
         Text {
             id: resultText
             anchors.fill: parent
@@ -38,43 +75,28 @@ Window {
             fontSizeMode: Text.Fit
         }
     }
-    Button {
-        id: calculatorType
-        anchors.left: parent.left
-        anchors.top: parent.top
-        width: parent.width - resultArea.width
-        height: resultArea.height
-        text: "Change"
-        onClicked: {
-            if(isBasic === true) {
-                myWidth = parent.width * 5 / 4
-                isBasic = false
-            }
-            else {
-                myWidth = parent.width /5 *4
-                isBasic = true
-            }
-        }
-    }
 
-    Item {
+
+
+
+
+    Item {                                              //////Button part of calculator
         id: buttons
         anchors.top: resultArea.bottom
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.bottom: parent.bottom
-
-
+        property int horizontalCount: 4
         Repeater
         {
-            id: operations
-            model: ["/", "*", "+", "-"]
+            id: memoryButtons
+            model: ["M+", "M-", "MS", "MC"]
             Button
             {
                 y: 0
                 x: index * width
-                width: realWidth / 4
-                height: parent.height / 5
+                width: realWidth / buttons.horizontalCount
+                height: parent.height / numOfButtonsInAColumn
                 text: modelData
                 onClicked:
                 {
@@ -82,14 +104,32 @@ Window {
                 }
             }
         }
-        Repeater {
+
+        Repeater
+        {
+            id: operations
+            model: ["/", "*", "+", "-"]
+            Button
+            {
+                y: height
+                x: index * width
+                width: realWidth / buttons.horizontalCount
+                height: parent.height / numOfButtonsInAColumn
+                text: modelData
+                onClicked:
+                {
+                    calculator.buttonClick(text)
+                }
+            }
+        }
+        Repeater {                                      //////Digits on calculator
             id: digits
             model: ["7", "8", "9", "4", "5", "6", "1", "2", "3", "0", ".", "C"]
             Button {
                 x: (index % 3) * width
-                y: Math.floor(index / 3 + 1) * height
-                width: realWidth / 4
-                height: parent.height / 5
+                y: Math.floor(index / 3 + 1 ) * height + height
+                width: realWidth / buttons.horizontalCount
+                height: parent.height / numOfButtonsInAColumn
                 text: modelData
                 onClicked: {
                     calculator.buttonClick(text)
@@ -98,24 +138,33 @@ Window {
             }
 
 
-        Button {
+        Button {                                        //////Result button
             id: resultButton
+            style: ButtonStyle {
+                background: Rectangle{
+                    color: control.pressed ? "#395EC6" : "#5574CB"
+                    border.width: control.activeFocus ? 1 : 2
+                    border.color: "#888"
+                    radius: 4
+                }
+            }
+
             x: 3 * width
-            y: parent.height / 5
-            width: realWidth / 4
-            height: y * 4
+            y: parent.height / numOfButtonsInAColumn * 2
+            width: realWidth / buttons.horizontalCount
+            height: parent.height / numOfButtonsInAColumn * (numOfButtonsInAColumn -2)
             text: "="
             onClicked: calculator.buttonClick(text);
         }
 
-        Repeater {
+        Repeater {                                      //////Advanced calculator part
             id: advancedButtons
-            model: ["exp","log","cos","sin","tan"]
+            model: ["exp","log","cos","sin","tan","abs"]
             Button{
                 x: realWidth
                 y: index * height
-                width: parent.width / 5
-                height: parent.height / 5
+                width: parent.width / (numOfButtonsInARow + 1)
+                height: parent.height / numOfButtonsInAColumn
                 text: modelData
                 onClicked:
                 {
@@ -127,16 +176,20 @@ Window {
 
     }
 
-        Item{
+        Item {                                          //////Item for writing on keyboard
             focus: true
             Keys.enabled: true
             Keys.onPressed: {
-                if(event.key >= 48 && event.key <= 57)
+                if(event.key >= 48 && event.key <= 57)      //numbers from keyboard
                     calculator.buttonClick(event.key - 48)
+                else switch(event.key) {                    //symbols from keyboard
+                    case 42: calculator.buttonClick("*"); break;
+                    case 43: calculator.buttonClick("+"); break;
+                    case 45: calculator.buttonClick("-"); break;
+                    case 46: calculator.buttonClick("."); break;
+                    case 47: calculator.buttonClick("/"); break;
+                    case 61: calculator.buttonClick("="); break;
+                }
             }
-
-
-
     }
-
 }

@@ -1,5 +1,7 @@
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
+#include <QQuickView>
+#include <QQmlContext>
 #include"calculator.h"
 
 int main(int argc, char *argv[])
@@ -9,7 +11,8 @@ int main(int argc, char *argv[])
     QGuiApplication app(argc, argv);
 
     QQmlApplicationEngine engine;
-
+    Calculator calc;
+    engine.rootContext()->setContextProperty("Calc",&calc);
     qmlRegisterType<Calculator>("com.Calculator",1,0,"Calculator");
 
     const QUrl url(QStringLiteral("qrc:/main.qml"));

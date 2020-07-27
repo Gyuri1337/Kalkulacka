@@ -4,6 +4,7 @@
 #include<stdio.h>
 #include<string>
 
+
 class Calculator: public QObject
 {
     Q_OBJECT
@@ -16,13 +17,17 @@ public slots:
     void buttonClick(QString click);
 
 private:
-    float actaulResult = NAN;
-    char myOperator;
+    float actaulResult = 0;
+    float actualMemory = 0;
+    char myOperator= '=';
+    bool isOperator = false;
+    bool isNull =true;
+    bool isDot = false;
     QString myDisplay = "0";
-    QString display(){ return myDisplay; }
+    QString display(){ return myDisplay == 'N' ? "0" : myDisplay; }
     void setDisplay(QString value);
     float Calculate(char op, float a, float b);
-    bool isOperator = false;
+    float Calculate(std::string function, float a);
     bool emptyDisplay = true;
 
 };
